@@ -5,7 +5,7 @@ const screenResolution = {width: window.innerWidth, height: window.innerHeight};
 const canvasSize = screenResolution.width;
 canvas.width = canvas.height = canvasSize;
 
-const terrainSize = 5000;
+const terrainSize = 10000;
 const minimapSize = 150;
 const minimapPlayerSize = 4;
 const defaultHexagonSize = 100;
@@ -15,6 +15,13 @@ const movement = [0, 0, 0, 0];
 const defaultHexagonPoints =
     [{x: 50, y: 0}, {x: 100, y: 25 * 1.2}, {x: 100, y: 75 * 1.2},
         {x: 50, y: 100 * 1.2}, {x: 0, y: 75 * 1.2}, {x: 0, y: 25 * 1.2}];
+
+function toScreenCoordinates(gameWorldCoordinates) {
+    return Object.assign(gameWorldCoordinates, {
+        x: gameWorldCoordinates.x - player.x + canvasSize / 2,
+        y: gameWorldCoordinates.y - player.y + screenResolution.height / 2
+    });
+}
 
 document.onkeydown = e => {
     if (e.keyCode >= 37 && e.keyCode <= 40)
@@ -31,9 +38,11 @@ function drawHexagon(x, y, scale, moveWithPlayer) {
     if (moveWithPlayer === undefined)
         moveWithPlayer = true;
 
+    const coord = moveWithPlayer ? toScreenCoordinates({x, y}) : {x, y};
+
     const transformPoint = point => ({
-        x: point.x * scale + x - (moveWithPlayer ? player.x : 0) + (moveWithPlayer ? canvasSize / 2 : 0),
-        y: point.y * scale + y - (moveWithPlayer ? player.y : 0) + (moveWithPlayer ? screenResolution.height / 2 : 0)
+        x: point.x * scale + coord.x,
+        y: point.y * scale + coord.y
     });
 
     const drawLineToPoint = point => ctx.lineTo(point.x, point.y);
@@ -55,13 +64,14 @@ function drawPlayingFieldHexagons() {
     const scale = terrainSize / (maxAmountOfHexagonsOnARow * defaultHexagonSize);
     const verticalStepComparedToDefaultHexagonSize = 90;
     const verticalStep = verticalStepComparedToDefaultHexagonSize * scale;
-    drawHexagon(terrainSize - defaultHexagonSize * scale * 2.5, 0, scale);
-    drawHexagon(terrainSize - defaultHexagonSize * scale * 1.5, 0, scale);
-    drawHexagon(terrainSize - defaultHexagonSize * scale * 3, verticalStep, scale);
-    drawHexagon(terrainSize - defaultHexagonSize * scale * 2, verticalStep, scale);
-    drawHexagon(terrainSize - defaultHexagonSize * scale, verticalStep, scale);
-    drawHexagon(terrainSize - defaultHexagonSize * scale * 1.5, verticalStep * 2, scale);
-    drawHexagon(terrainSize - defaultHexagonSize * scale * 2.5, verticalStep * 2, scale);
+    const calcHexagonX = step => terrainSize - defaultHexagonSize * scale * (maxAmountOfHexagonsOnARow - step);
+    drawHexagon(calcHexagonX(0.5), 0, scale);
+    drawHexagon(calcHexagonX(1.5), 0, scale);
+    drawHexagon(calcHexagonX(0), verticalStep, scale);
+    drawHexagon(calcHexagonX(1), verticalStep, scale);
+    drawHexagon(calcHexagonX(2), verticalStep, scale);
+    drawHexagon(calcHexagonX(1.5), verticalStep * 2, scale);
+    drawHexagon(calcHexagonX(0.5), verticalStep * 2, scale);
 }
 
 function drawPlayerOnPlayingField() {
@@ -84,10 +94,7 @@ function drawBorders() {
         {x: 0, y: -20, width: terrainSize, height: 20}, {x: terrainSize + 20, y: 0, width: 20, height: terrainSize},
         {x: 0, y: terrainSize + 20, width: terrainSize, height: 20}, {x: 0, y: 0, width: 20, height: terrainSize}];
 
-    borders.map(border => Object.assign(border, {
-        x: border.x - player.x + canvasSize / 2,
-        y: border.y - player.y + screenResolution.height / 2
-    })).forEach(border => ctx.fillRect(border.x, border.y, border.width, border.height));
+    borders.map(border => Object.assign(border, toScreenCoordinates(border))).forEach(border => ctx.fillRect(border.x, border.y, border.width, border.height));
 }
 
 function drawMinimap() {
@@ -128,13 +135,13 @@ render();
 
 setInterval(() => {
     if (movement[0])
-        player.x -= 8;
+        player.x -= 4;
     if (movement[1])
-        player.y -= 8;
+        player.y -= 4;
     if (movement[2])
-        player.x += 8;
+        player.x += 4;
     if (movement[3])
-        player.y += 8;
+        player.y += 4;
 
     document.title = `${player.x} - ${player.y} - ${screenResolution.height}`;
 }, 1000 / 60);
