@@ -14,12 +14,10 @@ function getLineDataFromSlopeAndPoint(slope, linePoint1) {
     return getLineDataFromTwoPoints(linePoint1, linePoint2);
 }
 
-function getPerpendicularIntersectionPoint(linePoint1, linePoint2, perpendicularLinePoint1) {
-    const d1 = getLineDataFromTwoPoints(linePoint1, linePoint2);
-    const d2 = getLineDataFromSlopeAndPoint(-1 / getSlope(linePoint1, linePoint2), perpendicularLinePoint1);
-    const delta = d1.a * d2.b - d2.a * d1.b;
-    const x = (d2.b * d1.c - d1.b * d2.c) / delta;
-    const y = (d1.a * d2.c - d2.a * d1.c) / delta;
+function getPerpendicularIntersectionPoint(line1Data, line2Data) {
+    const delta = line1Data.a * line2Data.b - line2Data.a * line1Data.b;
+    const x = (line2Data.b * line1Data.c - line1Data.b * line2Data.c) / delta;
+    const y = (line1Data.a * line2Data.c - line2Data.a * line1Data.c) / delta;
     return {x, y};
 }
 
@@ -27,13 +25,26 @@ function getDistanceVector(point1, point2) {
     return {x: point1.x - point2.x, y: point1.y - point2.y};
 }
 
-function distance(point1, point2) {
+function getDistance(point1, point2) {
     return Math.sqrt(Math.pow(point2.x - point1.x, 2) + Math.pow(point2.y - point1.y, 2));
+}
+
+function doLinesIntersect(linePoint1, linePoint2, intersectionPoint) {
+    const xAlright = () => (linePoint1.x <= intersectionPoint.x && linePoint2.x >= intersectionPoint.x) ||
+        (linePoint1.x >= intersectionPoint.x && linePoint2.x <= intersectionPoint.x);
+    const yAlright = () => (linePoint1.y <= intersectionPoint.y && linePoint2.y >= intersectionPoint.y) ||
+        (linePoint1.y >= intersectionPoint.y && linePoint2.y <= intersectionPoint.y);
+    return xAlright() && yAlright();
 }
 
 function getDistanceLinePlayer(linePoint1, linePoint2, playerPoint) {
     const lineSlope = getSlope(linePoint1, linePoint2);
-    const intersectionPoint = getPerpendicularIntersectionPoint(linePoint1, linePoint2, playerPoint);
+    const line1Data = getLineDataFromTwoPoints(linePoint1, linePoint2);
+    const perpendicularLineData = getLineDataFromSlopeAndPoint(-1 / lineSlope, playerPoint);
+
+    const intersectionPoint = getPerpendicularIntersectionPoint(line1Data, perpendicularLineData);
+    const distance = getDistance(intersectionPoint, playerPoint);
     const distanceVector = getDistanceVector(intersectionPoint, playerPoint);
-    return {intersectionPoint, lineSlope, distanceVector};
+    const linesIntersect = doLinesIntersect(linePoint1, linePoint2, intersectionPoint);
+    return {intersectionPoint, lineSlope, distance, distanceVector, linesIntersect};
 }

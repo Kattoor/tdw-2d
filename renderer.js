@@ -7,42 +7,26 @@ canvas.width = canvas.height = canvasSize;
 
 const defaultHexagonSize = 100;
 
-let intersectionPoint = {x: 0, y: 0};
-
-function getdistanceBetweenPlayerAndUpperLeftLine() {
-    const scale = terrainSize / (3 * defaultHexagonSize);
-    const calcHexagonX = step => terrainSize - defaultHexagonSize * scale * (3 - step);
-
-    const upperLeftHexagonX = calcHexagonX(0.5);
-    const upperLeftHexagonY = 0;
-
-    const hexagonPos = {x: upperLeftHexagonX, y: upperLeftHexagonY};
-    const hexagonPoint1 = {x: 0, y: 25 * 1.2};
-    const hexagonPoint2 = {x: 50, y: 0};
+function getDistances() {
+    const scale = terrainSize / 30;
 
     const transformPoint = hexagonPoint => ({
-        x: hexagonPoint.x * scale + hexagonPos.x,
-        y: hexagonPoint.y * scale + hexagonPos.y
+        x: hexagonPoint.x * scale,
+        y: hexagonPoint.y * scale,
     });
 
-    const startPoint = toScreenCoordinates(transformPoint(hexagonPoint1));
-    const endPoint = toScreenCoordinates(transformPoint(hexagonPoint2));
+    const distances = [];
 
-    const playerPos = toScreenCoordinates(player);
+    bounds.forEach((currentPoint, index, bounds) => {
+        const nextPoint = index === bounds.length - 1 ? bounds[0] : bounds[index + 1];
+        const startPoint = toScreenCoordinates(transformPoint(currentPoint));
+        const endPoint = toScreenCoordinates(transformPoint(nextPoint));
+        const playerPos = toScreenCoordinates(player);
+        const distance = getDistanceLinePlayer(startPoint, endPoint, {x: playerPos.x, y: playerPos.y});
+        distances.push(distance);
+    });
 
-    const distance = getDistanceLinePlayer(startPoint, endPoint, {x: playerPos.x, y: playerPos.y});
-
-//    document.title = Math.round(distance.distanceVector.x) + ', ' + Math.round(distance.distanceVector.y) + ' + ' + player.x + ", " + player.y;
-
-/*
-    const ipos = toScreenCoordinates(distance.intersection);
-    ctx.fillRect(ipos.screenX, ipos.screenY, 10, 10);
-*/
-
-//    intersectionPoint = distance.intersection;
-
-
-    return distance;
+    return distances;
 }
 
 function drawDistanceBetweenPlayerAndUpperLeftLine() {
@@ -58,6 +42,10 @@ function drawDistanceBetweenPlayerAndUpperLeftLine() {
 */
 
 }
+
+const bounds = [{x: 5, y: 3}, {x: 10, y: 0}, {x: 15, y: 3}, {x: 20, y: 0}, {x: 25, y: 3}, {x: 25, y: 9},
+    {x: 30, y: 12}, {x: 30, y: 18}, {x: 25, y: 21}, {x: 25, y: 27}, {x: 20, y: 30}, {x: 15, y: 27},
+    {x: 10, y: 30}, {x: 5, y: 27}, {x: 5, y: 21}, {x: 0, y: 18}, {x: 0, y: 12}, {x: 5, y: 9}];
 
 const defaultHexagonPoints =
     [{x: 50, y: 0}, {x: 100, y: 25 * 1.2}, {x: 100, y: 75 * 1.2},
@@ -120,19 +108,17 @@ function clearCanvas() {
 }
 
 function drawPlayingFieldHexagons() {
-    const maxAmountOfHexagonsOnARow = 3;
-    const scale = terrainSize / (maxAmountOfHexagonsOnARow * defaultHexagonSize);
-    const verticalStepComparedToDefaultHexagonSize = 90;
-    const verticalStep = verticalStepComparedToDefaultHexagonSize * scale;
-    const calcHexagonX = step => terrainSize - defaultHexagonSize * scale * (maxAmountOfHexagonsOnARow - step);
+    const boundsWidth = 30;
+    const scale = terrainSize / boundsWidth;
+    const startingPoint = toScreenCoordinates({x: bounds[0].x * scale, y: bounds[0].y * scale});
+    //document.title = startingPoint.screenX + ', ' + startingPoint.screenY;
     ctx.beginPath();
-    prepareHexagonStroke(calcHexagonX(0.5), 0, scale);
-    prepareHexagonStroke(calcHexagonX(1.5), 0, scale);
-    prepareHexagonStroke(calcHexagonX(0), verticalStep, scale);
-    prepareHexagonStroke(calcHexagonX(1), verticalStep, scale);
-    prepareHexagonStroke(calcHexagonX(2), verticalStep, scale);
-    prepareHexagonStroke(calcHexagonX(1.5), verticalStep * 2, scale);
-    prepareHexagonStroke(calcHexagonX(0.5), verticalStep * 2, scale);
+    ctx.moveTo(startingPoint.screenX, startingPoint.screenY);
+    bounds.slice(1).map(point => ({
+        x: point.x * scale,
+        y: point.y * scale
+    })).map(toScreenCoordinates).forEach(point => ctx.lineTo(point.screenX, point.screenY));
+    ctx.lineTo(startingPoint.screenX, startingPoint.screenY);
     ctx.stroke();
 }
 
@@ -155,16 +141,18 @@ function drawPlayerOnPlayingField() {
     ctx.fillRect(playerScreenCoords.screenX - 1, playerScreenCoords.screenY - 1, 2, 2);
     ctx.fillStyle = '#000000';
 
-    const distance = getdistanceBetweenPlayerAndUpperLeftLine();
-    if (distance.distanceVector.x < 0)
-        ctx.strokeStyle = '#00ff00';
-    else
-        ctx.strokeStyle = '#ff0000';
-    const interSectionPointOnScreen = toScreenCoordinates(distance.intersectionPoint);
-    ctx.beginPath();
-    ctx.moveTo(interSectionPointOnScreen.screenX, interSectionPointOnScreen.screenY);
-    ctx.lineTo(playerScreenCoords.screenX, playerScreenCoords.screenY);
-    ctx.stroke();
+    /*const distances = getDistances();
+    distances.forEach(distance => {
+        if (distance.distanceVector.x < 0)
+            ctx.strokeStyle = '#00ff00';
+        else
+            ctx.strokeStyle = '#ff0000';
+        const interSectionPointOnScreen = toScreenCoordinates(distance.intersectionPoint);
+        ctx.beginPath();
+        ctx.moveTo(interSectionPointOnScreen.screenX, interSectionPointOnScreen.screenY);
+        ctx.lineTo(playerScreenCoords.screenX, playerScreenCoords.screenY);
+        ctx.stroke();
+    });*/
     ctx.strokeStyle = '#000000';
 }
 

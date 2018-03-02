@@ -1,1 +1,1 @@
-const terrainSize = 10000;
+const terrainSize = 2000;
