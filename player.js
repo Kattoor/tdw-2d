@@ -17,7 +17,7 @@ document.onkeyup = e => {
 setInterval(() => {
 
     const distance = getdistanceBetweenPlayerAndUpperLeftLine();
-    if (distance.distanceVector.x >= 0) {
+    if (distance.distanceVector.x + 6 >= 0) {
         movement[0] = 0;
         movement[1] = 0;
     }

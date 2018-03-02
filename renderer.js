@@ -160,7 +160,7 @@ function drawPlayerOnPlayingField() {
         ctx.strokeStyle = '#00ff00';
     else
         ctx.strokeStyle = '#ff0000';
-    const interSectionPointOnScreen = toScreenCoordinates(distance.intersection);
+    const interSectionPointOnScreen = toScreenCoordinates(distance.intersectionPoint);
     ctx.beginPath();
     ctx.moveTo(interSectionPointOnScreen.screenX, interSectionPointOnScreen.screenY);
     ctx.lineTo(playerScreenCoords.screenX, playerScreenCoords.screenY);
