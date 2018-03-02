@@ -39,5 +39,6 @@ function getDistanceLinePlayer(pointA, pointB, pointPlayer) {
     console.log(pointA);
     console.log(pointB);
     console.log(pointPlayer)*/
-    return distanceVector(intersect(pointA.x, pointA.y, pointB.x, pointB.y, pointPlayer.x, pointPlayer.y), pointPlayer);
+    const intersection = intersect(pointA.x, pointA.y, pointB.x, pointB.y, pointPlayer.x, pointPlayer.y);
+    return {intersection, distanceVector: distanceVector(intersection, pointPlayer)};
 }
