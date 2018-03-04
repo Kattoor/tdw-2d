@@ -30,6 +30,12 @@ function getDistance(point1, point2) {
 }
 
 function doLinesIntersect(linePoint1, linePoint2, intersectionPoint) {
+    /*  linePoint1.x = Math.round(linePoint1.x);
+      linePoint1.y = Math.round(linePoint1.y);
+      linePoint2.x = Math.round(linePoint2.x);
+      linePoint2.y = Math.round(linePoint2.y);
+      intersectionPoint.x = Math.round(intersectionPoint.x);
+      intersectionPoint.y = Math.round(intersectionPoint.y);*/
     const xAlright = () => (linePoint1.x <= intersectionPoint.x && linePoint2.x >= intersectionPoint.x) ||
         (linePoint1.x >= intersectionPoint.x && linePoint2.x <= intersectionPoint.x);
     const yAlright = () => (linePoint1.y <= intersectionPoint.y && linePoint2.y >= intersectionPoint.y) ||

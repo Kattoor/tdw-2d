@@ -27,12 +27,12 @@ setInterval(() => {
 
     const distances = getDistances();
 
-    if (i++ % 100 === 0) {
+    /*if (i++ % 100 === 0) {
         console.clear();
         console.log(Math.round(distances[4].intersectionPoint.x) + ', ' + Math.round(distances[4].intersectionPoint.y));
         console.log(Math.round(distances[4].distanceVector.x) + ', ' + Math.round(distances[4].distanceVector.y) + ', ' + (distances[4].lineSlope === Number.POSITIVE_INFINITY ? '+' : '-') + distances[4].lineSlope + ', ' + distances[4].linesIntersect);
         console.log(Math.round(distances[6].distanceVector.x) + ', ' + Math.round(distances[6].distanceVector.y) + ', ' + (distances[6].lineSlope === Number.POSITIVE_INFINITY ? '+' : '-') + distances[6].lineSlope + ', ' + distances[6].linesIntersect);
-    }
+    }*/
 
     [distances[0], distances[2], distances[16]].forEach(distance => {
         if (distance.distanceVector.x + 6 >= 0 && distance.lineSlope > -1 && distance.lineSlope < 0 && distance.linesIntersect) {
