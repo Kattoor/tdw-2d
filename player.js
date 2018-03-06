@@ -2,6 +2,7 @@ function Player(x, y, speed) {
 
     this.coordinates = {x, y};
     const movement = [0, 0, 0, 0];
+    this.visionPoint = {x: x + 1, y};
 
     document.onkeydown = e => {
         if (e.keyCode >= 37 && e.keyCode <= 40)
@@ -11,6 +12,10 @@ function Player(x, y, speed) {
     document.onkeyup = e => {
         if (e.keyCode >= 37 && e.keyCode <= 40)
             movement[e.keyCode - 37] = 0;
+    };
+
+    document.onmousemove = e => {
+        this.visionPoint = {x: e.pageX, y: e.pageY};
     };
 
     this.update = terrain => {

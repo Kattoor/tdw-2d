@@ -4,12 +4,6 @@ function Renderer(canvas, ctx, player) {
     this._canvasSize = this._screenResolution.width;
     canvas.width = canvas.height = this._canvasSize;
 
-    this._defaultHexagonSize = 100;
-
-    this._defaultHexagonPoints =
-        [{x: 50, y: 0}, {x: 100, y: 25 * 1.2}, {x: 100, y: 75 * 1.2},
-            {x: 50, y: 100 * 1.2}, {x: 0, y: 75 * 1.2}, {x: 0, y: 25 * 1.2}];
-
     this._toScreenCoordinates = gameWorldCoordinates => {
         return Object.assign(gameWorldCoordinates, {
             screenX: gameWorldCoordinates.x - player.coordinates.x + this._canvasSize / 2,
@@ -17,33 +11,11 @@ function Renderer(canvas, ctx, player) {
         });
     };
 
-    this._drawHexagon = (x, y, scale, moveWithPlayer, color) => {
-
-        if (moveWithPlayer === undefined)
-            moveWithPlayer = true;
-
-        const coord = moveWithPlayer ? this._toScreenCoordinates({x, y}) : {screenX: x, screenY: y};
-
-        const transformPoint = point => ({
-            x: point.x * scale + coord.screenX,
-            y: point.y * scale + coord.screenY
+    this._toGameWorldCoordinates = screenCoordinates => {
+        return Object.assign(screenCoordinates, {
+            gameWorldX: screenCoordinates.x + player.coordinates.x - this._canvasSize / 2,
+            gameWorldY: screenCoordinates.y + player.coordinates.y - this._screenResolution.height / 2
         });
-
-        const drawLineToPoint = point => ctx.lineTo(point.x, point.y);
-
-        ctx.beginPath();
-        const startPoint = transformPoint(this._defaultHexagonPoints[0]);
-        ctx.moveTo(startPoint.x, startPoint.y);
-        this._defaultHexagonPoints.slice(1).map(transformPoint).forEach(drawLineToPoint);
-        drawLineToPoint(startPoint);
-        if (color === undefined)
-            ctx.stroke();
-        else {
-            ctx.fillStyle = color;
-            ctx.fill();
-            ctx.fillStyle = '#000000';
-            ctx.stroke();
-        }
     };
 
     this._clearCanvas = () => {
@@ -90,11 +62,13 @@ function Renderer(canvas, ctx, player) {
 
         const scaleToMinimap = point => ({x: point.x * minimap.minimapScale, y: point.y * minimap.minimapScale});
 
-        const moveToMinimap = point => ({x: point.x + 50, y: point.y + this._screenResolution.height - minimap.minimapSize - 50});
+        const moveToMinimap = point => ({
+            x: point.x + 50,
+            y: point.y + this._screenResolution.height - minimap.minimapSize - 50
+        });
 
         ctx.beginPath();
-        //ctx.fillStyle = '#ecf0f1aa';
-        ctx.fillStyle = '#ff0000';
+        ctx.fillStyle = '#3498db55';
         ctx.arc(minimap.minimapSize / 2 + 50, this._screenResolution.height - minimap.minimapSize / 2 - 50, minimap.minimapSize / 2 + minimap.minimapSize / 10, 0, 2 * Math.PI);
         ctx.fill();
         ctx.fillStyle = '#000000';
@@ -106,20 +80,11 @@ function Renderer(canvas, ctx, player) {
             hexagonScreenCoordinates.forEach(coord => ctx.lineTo(coord.x, coord.y));
             ctx.lineTo(hexagonScreenCoordinates[0].x, hexagonScreenCoordinates[0].y);
         });
+        ctx.fillStyle = '#2ecc71';
+        ctx.fill();
         ctx.stroke();
 
-        /*const maxAmountOfHexagonsOnARow = 3;
-        const scale = minimapSize / (maxAmountOfHexagonsOnARow * this._defaultHexagonSize);
-        const verticalStepComparedToDefaultHexagonSize = 90;
-        const verticalStep = verticalStepComparedToDefaultHexagonSize * scale;
-        const calcHexagonX = step => minimapSize - this._defaultHexagonSize * scale * (maxAmountOfHexagonsOnARow - step) + 50;
-        this._drawHexagon(calcHexagonX(0.5), this._screenResolution.height - minimapSize - 50, scale, false, '#2ecc71');
-        this._drawHexagon(calcHexagonX(1.5), this._screenResolution.height - minimapSize - 50, scale, false, '#2ecc71');
-        this._drawHexagon(calcHexagonX(0), this._screenResolution.height - minimapSize + verticalStep - 50, scale, false, '#2ecc71');
-        this._drawHexagon(calcHexagonX(1), this._screenResolution.height - minimapSize + verticalStep - 50, scale, false, '#2ecc71');
-        this._drawHexagon(calcHexagonX(2), this._screenResolution.height - minimapSize + verticalStep - 50, scale, false, '#2ecc71');
-        this._drawHexagon(calcHexagonX(1.5), this._screenResolution.height - minimapSize + verticalStep * 2 - 50, scale, false, '#2ecc71');
-        this._drawHexagon(calcHexagonX(0.5), this._screenResolution.height - minimapSize + verticalStep * 2 - 50, scale, false, '#2ecc71');*/
+        ctx.fillStyle = '#000000';
     };
 
     this._drawPlayerOnMinimap = (terrain, player, minimap) => {
@@ -130,11 +95,82 @@ function Renderer(canvas, ctx, player) {
             minimap.minimapPlayerSize);
     };
 
+    this._drawPlayerVision = player => {
+        function getDistance(point1, point2) {
+            return Math.sqrt(Math.pow(point2.x - point1.x, 2) + Math.pow(point2.y - point1.y, 2));
+        }
+
+        function getVector(point1, point2) {
+            return {x: point2.x - point1.x, y: point2.y - point1.y};
+        }
+
+        ctx.beginPath();
+        const visionPointInGameWorld = this._toGameWorldCoordinates(player.visionPoint);
+        const distance = getDistance(player.coordinates, {x: visionPointInGameWorld.gameWorldX, y: visionPointInGameWorld.gameWorldY});
+        const scale = 500 / distance;
+        const deltaVector = getVector(player.coordinates, {x: visionPointInGameWorld.gameWorldX, y: visionPointInGameWorld.gameWorldY});
+        const visionPointScaledInGameWorld = {x: deltaVector.x * scale + player.coordinates.x, y: deltaVector.y * scale + player.coordinates.y};
+        const visionPointScaledOnScreen = this._toScreenCoordinates(visionPointScaledInGameWorld);
+        const playerOnScreen = this._toScreenCoordinates(player.coordinates);
+        /*console.log('player', {x: player.coordinates.x, y: player.coordinates.y});
+        console.log('vision', {x: visionPointInGameWorld.gameWorldX, y: visionPointInGameWorld.gameWorldY});
+        console.log('distance', getDistance({x: player.coordinates.x, y: player.coordinates.y}, {x: visionPointScaledInGameWorld.x, y: visionPointScaledInGameWorld.y}));*/
+        ctx.moveTo(playerOnScreen.screenX, playerOnScreen.screenY);
+        ctx.lineTo(visionPointScaledOnScreen.screenX, visionPointScaledOnScreen.screenY);
+
+        //console.log(visionPointScaledInGameWorld)
+       /* const c = getDistance({x: player.coordinates.x, y: player.coordinates.y}, {x: visionPointScaledInGameWorld.x, y: visionPointScaledInGameWorld.y});
+        const a = Math.sin(30 * Math.PI * 180) / (Math.sin((180 - 30 - 90) * Math.PI * 180) / c);
+        const b = Math.sqrt(Math.pow(a, 2) + Math.pow(c, 2));
+
+        const Cy = (Math.pow(c, 2) + Math.pow(b, 2) - Math.pow(a, 2)) / (2 * c);
+        const Cx = Math.sqrt(Math.pow(b, 2) - Math.pow(Cy, 2));
+
+        const point = this._toScreenCoordinates({x: Cx + player.coordinates.x, y: Cy + player.coordinates.y});*/
+
+        //console.log(point);
+
+        //https://math.stackexchange.com/questions/543961/determine-third-point-of-triangle-when-two-points-and-all-sides-are-known
+
+        //x′=xcosθ−ysinθ
+        //y'=ycosθ+xsinθ
+
+
+
+        //https://academo.org/demos/rotation-about-point/
+
+        const point1 = this._toScreenCoordinates({
+            x: (visionPointScaledInGameWorld.x - player.coordinates.x) * Math.cos(30 * Math.PI / 180) - (visionPointScaledInGameWorld.y - player.coordinates.y) * Math.sin(30 * Math.PI / 180) + player.coordinates.x,
+            y: (visionPointScaledInGameWorld.y - player.coordinates.y) * Math.cos(30 * Math.PI / 180) + (visionPointScaledInGameWorld.x - player.coordinates.x) * Math.sin(30 * Math.PI / 180) + player.coordinates.y
+        });
+
+        const point2 = this._toScreenCoordinates({
+            x: (visionPointScaledInGameWorld.x - player.coordinates.x) * Math.cos(330 * Math.PI / 180) - (visionPointScaledInGameWorld.y - player.coordinates.y) * Math.sin(330 * Math.PI / 180) + player.coordinates.x,
+            y: (visionPointScaledInGameWorld.y - player.coordinates.y) * Math.cos(330 * Math.PI / 180) + (visionPointScaledInGameWorld.x - player.coordinates.x) * Math.sin(330 * Math.PI / 180) + player.coordinates.y
+        });
+
+        ctx.beginPath();
+        ctx.moveTo(playerOnScreen.screenX, playerOnScreen.screenY);
+        ctx.lineTo(point1.screenX, point1.screenY);
+        ctx.lineTo(point2.screenX, point2.screenY);
+        //ctx.lineTo(playerOnScreen.screenX, playerOnScreen.screenY);
+        ctx.fillStyle = '#ffff0022';
+        ctx.fill();
+        ctx.fillStyle = '#000000';
+
+
+
+        /*console.log('player', {x: player.coordinates.x, y: player.coordinates.y});
+        console.log('vision', {x: visionPointInGameWorld.gameWorldX, y: visionPointInGameWorld.gameWorldY});*/
+        //console.log('pt1', pt1);
+    };
+
     this.render = (terrain, player, minimap) => {
         this._clearCanvas();
         this._drawPlayingFieldHexagons(terrain);
         this._drawPlayerOnPlayingField();
         this._drawMinimap(terrain, minimap);
         this._drawPlayerOnMinimap(terrain, player, minimap);
+        this._drawPlayerVision(player);
     }
 }
