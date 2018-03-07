@@ -43,6 +43,10 @@ function doLinesIntersect(linePoint1, linePoint2, intersectionPoint) {
     return xAlright() && yAlright();
 }
 
+function getIntersectionPoint(line1, line2) {
+    return getPerpendicularIntersectionPoint(getLineDataFromTwoPoints(line1.point1, line1.point2), getLineDataFromTwoPoints(line2.point1, line2.point2));
+}
+
 function getDistanceLinePlayer(linePoint1, linePoint2, playerPoint) {
     const lineSlope = getSlope(linePoint1, linePoint2);
     const line1Data = getLineDataFromTwoPoints(linePoint1, linePoint2);

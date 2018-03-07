@@ -95,7 +95,7 @@ function Renderer(canvas, ctx, player) {
             minimap.minimapPlayerSize);
     };
 
-    this._drawPlayerVision = player => {
+    this._drawPlayerVision = (player, gameObjects) => {
         function getDistance(point1, point2) {
             return Math.sqrt(Math.pow(point2.x - point1.x, 2) + Math.pow(point2.y - point1.y, 2));
         }
@@ -157,10 +157,58 @@ function Renderer(canvas, ctx, player) {
             y: (visionPointScaledInGameWorld.y - player.coordinates.y) * Math.cos(330 * Math.PI / 180) + (visionPointScaledInGameWorld.x - player.coordinates.x) * Math.sin(330 * Math.PI / 180) + player.coordinates.y
         });
 
+
+        /*console.log('player', {x: player.coordinates.x, y: player.coordinates.y});
+        console.log('vision', {x: visionPointInGameWorld.gameWorldX, y: visionPointInGameWorld.gameWorldY});*/
+        //console.log('pt1', pt1);
+
+        const visionPoints = {point1, point2};
+
+        const gameObject = this._toScreenCoordinates(gameObjects[3]);
+        //gameObjects.slice(3, 4).map(this._toScreenCoordinates).forEach(gameObject => {
+        ctx.beginPath();
+        ctx.arc(gameObject.screenX, gameObject.screenY, 20, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.closePath();
+
+        const player2 = this._toScreenCoordinates(player.coordinates);
+
+        const slopeBetweenPlayerAndGameObject = -1 * getSlope({x: player2.screenX, y: player2.screenY}, {x: gameObject.screenX, y: gameObject.screenY});
+        const slope = slopeBetweenPlayerAndGameObject === 0 ? Number.POSITIVE_INFINITY : -1 / slopeBetweenPlayerAndGameObject;
+
+        /* todo: project {x,y} and {x2,y2} on outer edge of vision so we get shadow */
+
+        const r = Math.sqrt(1 + Math.pow(slope, 2));
+
+        const x = r === Number.POSITIVE_INFINITY ? gameObject.screenX : gameObject.screenX + (20 / r);
+        const y = r === Number.POSITIVE_INFINITY ? gameObject.screenY - 20 : gameObject.screenY - (20 * slope) / r;
+        const x2 = r === Number.POSITIVE_INFINITY ? gameObject.screenX : gameObject.screenX - (20 / r);
+        const y2 = r === Number.POSITIVE_INFINITY ? gameObject.screenY + 20 : gameObject.screenY + (20 * slope) / r;
+
+        const intersectionPoint1 = getIntersectionPoint({point1: {x: player2.screenX, y: player2.screenY}, point2: {x: x, y: y}}, {point1: {x: visionPoints.point1.screenX, y: visionPoints.point1.screenY}, point2: {x: visionPoints.point2.screenX, y: visionPoints.point2.screenY}});
+        const intersectionPoint2 = getIntersectionPoint({point1: {x: player2.screenX, y: player2.screenY}, point2: {x: x2, y: y2}}, {point1: {x: visionPoints.point1.screenX, y: visionPoints.point1.screenY}, point2: {x: visionPoints.point2.screenX, y: visionPoints.point2.screenY}});
+
+        /*ctx.beginPath();
+        ctx.moveTo(player2.screenX, player2.screenY);
+        ctx.lineTo(intersectionPoint1.x, intersectionPoint1.y);
+        ctx.moveTo(player2.screenX, player2.screenY);
+        ctx.lineTo(intersectionPoint2.x, intersectionPoint2.y);
+        ctx.strokeStyle = '#ff0000';
+        ctx.stroke();
+        ctx.closePath();*/
+
+        ctx.strokeStyle = '#000000';
+       // });
+
         ctx.beginPath();
         ctx.moveTo(playerOnScreen.screenX, playerOnScreen.screenY);
         ctx.lineTo(point1.screenX, point1.screenY);
+        ctx.lineTo(intersectionPoint1.x, intersectionPoint1.y);
+
+        ctx.lineTo(playerOnScreen.screenX, playerOnScreen.screenY);
         ctx.lineTo(point2.screenX, point2.screenY);
+        ctx.lineTo(intersectionPoint2.x, intersectionPoint2.y);
+        ctx.lineTo(playerOnScreen.screenX, playerOnScreen.screenY);
         //ctx.lineTo(playerOnScreen.screenX, playerOnScreen.screenY);
         ctx.fillStyle = '#ffff0022';
         ctx.fill();
@@ -168,76 +216,22 @@ function Renderer(canvas, ctx, player) {
         ctx.beginPath();
         ctx.arc(playerOnScreen.screenX, playerOnScreen.screenY, 40, 0, 2 * Math.PI);
         ctx.fill();
+
+        ctx.beginPath();
+        ctx.lineTo(playerOnScreen.screenX, playerOnScreen.screenY);
+        ctx.lineTo(x, y);
+        ctx.lineTo(x2, y2);
+        ctx.fill();
+        ctx.closePath();
+
+
         ctx.fillStyle = '#000000';
 
-
-        /*console.log('player', {x: player.coordinates.x, y: player.coordinates.y});
-        console.log('vision', {x: visionPointInGameWorld.gameWorldX, y: visionPointInGameWorld.gameWorldY});*/
-        //console.log('pt1', pt1);
     };
 
-    this._drawGameObjects = (gameObjects, player) => {
-
-        gameObjects.map(this._toScreenCoordinates).forEach(gameObject => {
-            ctx.beginPath();
-            ctx.arc(gameObject.screenX, gameObject.screenY, 20, 0, 2 * Math.PI);
-            ctx.fill();
-            ctx.closePath();
-
-            const player2 = this._toScreenCoordinates(player.coordinates);
-            /*   ctx.beginPath();
-               ctx.moveTo(player2.screenX, player2.screenY);
-               ctx.lineTo(gameObject.screenX, gameObject.screenY);
-               ctx.strokeStyle = '#ff0000';
-               ctx.stroke();
-               ctx.closePath();*/
-
-            /*const c = (1 / Math.sqrt(1 + Math.pow(slope, 2)));
-            const s =  (slope / Math.sqrt(1 + Math.pow(slope, 2)));
-            const x = gameObject.screenX - (20 * s);
-            const y = gameObject.screenY - (20 * c);
-            const x2 = gameObject.screenX + (20 * s);
-            const y2 = gameObject.screenY + (20 * c);*/
-            /*const k = (10 / Math.sqrt(1 + Math.pow(slope, 2)));
-            const x = gameObject.screenX + k;
-            const y = gameObject.screenY + k * slope;
-            const x2 = gameObject.screenX - k;
-            const y2 = gameObject.screenY - k * slope;*/
-
-            //x′=xcosθ−ysinθ
-            //y'=ycosθ+xsinθ
-
-            /* const angle = Math.asin(20 / getDistance({x: player.screenX, y: player.screenY}, {x: gameObject.screenX, y: gameObject.screenY})) * 57.2958;
-             document.title = angle;
-             const x = (gameObject.screenX - player.screenX) * Math.cos(angle * Math.PI / 180) - (gameObject.screenY - player.screenY) * Math.sin(angle * Math.PI / 180) + player.screenX;
-             const y = (gameObject.screenY - player.screenY) * Math.cos(angle * Math.PI / 180) - (gameObject.screenX - player.screenX) * Math.sin(angle * Math.PI / 180) + player.screenY;
-             const x2 = (gameObject.screenX - player.screenX) * Math.cos((360 - angle) * Math.PI / 180) - (gameObject.screenY - player.screenY) * Math.sin((360 - angle) * Math.PI / 180) + player.screenX;
-             const y2 = (gameObject.screenY - player.screenY) * Math.cos((360 - angle) * Math.PI / 180) - (gameObject.screenX - player.screenX) * Math.sin((360 - angle) * Math.PI / 180) + player.screenY;*/
+    this._drawGameObjects = (gameObjects, player, visionPoints) => {
 
 
-            const slopeBetweenPlayerAndGameObject = -1 * getSlope({x: player2.screenX, y: player2.screenY}, {x: gameObject.screenX, y: gameObject.screenY});
-            const slope = slopeBetweenPlayerAndGameObject === 0 ? Number.POSITIVE_INFINITY : -1 / slopeBetweenPlayerAndGameObject;
-
-            /* todo: project {x,y} and {x2,y2} on outer edge of vision so we get shadow */
-
-            const r = Math.sqrt(1 + Math.pow(slope, 2));
-
-            const x = r === Number.POSITIVE_INFINITY ? gameObject.screenX : gameObject.screenX + (20 / r);
-            const y = r === Number.POSITIVE_INFINITY ? gameObject.screenY - 20 : gameObject.screenY - (20 * slope) / r;
-            const x2 = r === Number.POSITIVE_INFINITY ? gameObject.screenX : gameObject.screenX - (20 / r);
-            const y2 = r === Number.POSITIVE_INFINITY ? gameObject.screenY + 20 : gameObject.screenY + (20 * slope) / r;
-
-            ctx.beginPath();
-            ctx.moveTo(player2.screenX, player2.screenY);
-            ctx.lineTo(x, y);
-            ctx.moveTo(player2.screenX, player2.screenY);
-            ctx.lineTo(x2, y2);
-            ctx.strokeStyle = '#ff0000';
-            ctx.stroke();
-            ctx.closePath();
-
-            ctx.strokeStyle = '#000000';
-        });
     };
 
     this.render = (terrain, player, minimap) => {
@@ -246,7 +240,7 @@ function Renderer(canvas, ctx, player) {
         this._drawPlayerOnPlayingField();
         this._drawMinimap(terrain, minimap);
         this._drawPlayerOnMinimap(terrain, player, minimap);
-        this._drawPlayerVision(player);
-        this._drawGameObjects(terrain.gameObjects, player);
+        const visionPoints = this._drawPlayerVision(player, terrain.gameObjects);
+        this._drawGameObjects(terrain.gameObjects, player, visionPoints);
     }
 }
