@@ -23,6 +23,8 @@ function Terrain() {
 
     this._scaleCoordinate = coordinate => ({x: Math.floor(coordinate.x * this._scale), y: Math.floor(coordinate.y * this._scale)});
 
+    this.gameObjects = [].concat(...Object.values(this._zoneBounds)).map(gameObject => ({x: gameObject.x * this._scale, y: gameObject.y * this._scale}));
+
     this.gameWorldBounds = this._bounds.map(this._scaleCoordinate);
     this.zoneBounds = Object.entries(this._zoneBounds)
         .reduce((zones, currentZone) => Object.assign(zones, {[currentZone[0]]: currentZone[1].map(this._scaleCoordinate)}), {});

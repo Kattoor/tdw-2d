@@ -2,7 +2,7 @@ function Game() {
 
     const terrain = new Terrain();
 
-    const player = new Player(0, 0, 8);
+    const player = new Player(0, 0, 4);
 
     const canvas = document.getElementsByTagName('canvas')[0];
     const canvasContext = canvas.getContext('2d');

@@ -106,10 +106,19 @@ function Renderer(canvas, ctx, player) {
 
         ctx.beginPath();
         const visionPointInGameWorld = this._toGameWorldCoordinates(player.visionPoint);
-        const distance = getDistance(player.coordinates, {x: visionPointInGameWorld.gameWorldX, y: visionPointInGameWorld.gameWorldY});
+        const distance = getDistance(player.coordinates, {
+            x: visionPointInGameWorld.gameWorldX,
+            y: visionPointInGameWorld.gameWorldY
+        });
         const scale = 500 / distance;
-        const deltaVector = getVector(player.coordinates, {x: visionPointInGameWorld.gameWorldX, y: visionPointInGameWorld.gameWorldY});
-        const visionPointScaledInGameWorld = {x: deltaVector.x * scale + player.coordinates.x, y: deltaVector.y * scale + player.coordinates.y};
+        const deltaVector = getVector(player.coordinates, {
+            x: visionPointInGameWorld.gameWorldX,
+            y: visionPointInGameWorld.gameWorldY
+        });
+        const visionPointScaledInGameWorld = {
+            x: deltaVector.x * scale + player.coordinates.x,
+            y: deltaVector.y * scale + player.coordinates.y
+        };
         const visionPointScaledOnScreen = this._toScreenCoordinates(visionPointScaledInGameWorld);
         const playerOnScreen = this._toScreenCoordinates(player.coordinates);
         /*console.log('player', {x: player.coordinates.x, y: player.coordinates.y});
@@ -119,14 +128,14 @@ function Renderer(canvas, ctx, player) {
         ctx.lineTo(visionPointScaledOnScreen.screenX, visionPointScaledOnScreen.screenY);
 
         //console.log(visionPointScaledInGameWorld)
-       /* const c = getDistance({x: player.coordinates.x, y: player.coordinates.y}, {x: visionPointScaledInGameWorld.x, y: visionPointScaledInGameWorld.y});
-        const a = Math.sin(30 * Math.PI * 180) / (Math.sin((180 - 30 - 90) * Math.PI * 180) / c);
-        const b = Math.sqrt(Math.pow(a, 2) + Math.pow(c, 2));
+        /* const c = getDistance({x: player.coordinates.x, y: player.coordinates.y}, {x: visionPointScaledInGameWorld.x, y: visionPointScaledInGameWorld.y});
+         const a = Math.sin(30 * Math.PI * 180) / (Math.sin((180 - 30 - 90) * Math.PI * 180) / c);
+         const b = Math.sqrt(Math.pow(a, 2) + Math.pow(c, 2));
 
-        const Cy = (Math.pow(c, 2) + Math.pow(b, 2) - Math.pow(a, 2)) / (2 * c);
-        const Cx = Math.sqrt(Math.pow(b, 2) - Math.pow(Cy, 2));
+         const Cy = (Math.pow(c, 2) + Math.pow(b, 2) - Math.pow(a, 2)) / (2 * c);
+         const Cx = Math.sqrt(Math.pow(b, 2) - Math.pow(Cy, 2));
 
-        const point = this._toScreenCoordinates({x: Cx + player.coordinates.x, y: Cy + player.coordinates.y});*/
+         const point = this._toScreenCoordinates({x: Cx + player.coordinates.x, y: Cy + player.coordinates.y});*/
 
         //console.log(point);
 
@@ -134,7 +143,6 @@ function Renderer(canvas, ctx, player) {
 
         //x′=xcosθ−ysinθ
         //y'=ycosθ+xsinθ
-
 
 
         //https://academo.org/demos/rotation-about-point/
@@ -156,13 +164,82 @@ function Renderer(canvas, ctx, player) {
         //ctx.lineTo(playerOnScreen.screenX, playerOnScreen.screenY);
         ctx.fillStyle = '#ffff0022';
         ctx.fill();
+        ctx.closePath();
+        ctx.beginPath();
+        ctx.arc(playerOnScreen.screenX, playerOnScreen.screenY, 40, 0, 2 * Math.PI);
+        ctx.fill();
         ctx.fillStyle = '#000000';
-
 
 
         /*console.log('player', {x: player.coordinates.x, y: player.coordinates.y});
         console.log('vision', {x: visionPointInGameWorld.gameWorldX, y: visionPointInGameWorld.gameWorldY});*/
         //console.log('pt1', pt1);
+    };
+
+    this._drawGameObjects = (gameObjects, player) => {
+
+        gameObjects.slice(3, 4).map(this._toScreenCoordinates).forEach(gameObject => {
+            ctx.beginPath();
+            ctx.arc(gameObject.screenX, gameObject.screenY, 20, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.closePath();
+
+            player = this._toScreenCoordinates(player.coordinates);
+            ctx.beginPath();
+            ctx.moveTo(player.screenX, player.screenY);
+            ctx.lineTo(gameObject.screenX, gameObject.screenY);
+            ctx.strokeStyle = '#ff0000';
+            ctx.stroke();
+            ctx.closePath();
+
+            const slope = -1 / (-1 * getSlope({x: player.screenX, y: player.screenY}, {
+                x: gameObject.screenX,
+                y: gameObject.screenY
+            })).toFixed(2);
+
+            /*const c = (1 / Math.sqrt(1 + Math.pow(slope, 2)));
+            const s =  (slope / Math.sqrt(1 + Math.pow(slope, 2)));
+            const x = gameObject.screenX - (20 * s);
+            const y = gameObject.screenY - (20 * c);
+            const x2 = gameObject.screenX + (20 * s);
+            const y2 = gameObject.screenY + (20 * c);*/
+            /*const k = (10 / Math.sqrt(1 + Math.pow(slope, 2)));
+            const x = gameObject.screenX + k;
+            const y = gameObject.screenY + k * slope;
+            const x2 = gameObject.screenX - k;
+            const y2 = gameObject.screenY - k * slope;*/
+
+            //x′=xcosθ−ysinθ
+            //y'=ycosθ+xsinθ
+
+            /* const angle = Math.asin(20 / getDistance({x: player.screenX, y: player.screenY}, {x: gameObject.screenX, y: gameObject.screenY})) * 57.2958;
+             document.title = angle;
+             const x = (gameObject.screenX - player.screenX) * Math.cos(angle * Math.PI / 180) - (gameObject.screenY - player.screenY) * Math.sin(angle * Math.PI / 180) + player.screenX;
+             const y = (gameObject.screenY - player.screenY) * Math.cos(angle * Math.PI / 180) - (gameObject.screenX - player.screenX) * Math.sin(angle * Math.PI / 180) + player.screenY;
+             const x2 = (gameObject.screenX - player.screenX) * Math.cos((360 - angle) * Math.PI / 180) - (gameObject.screenY - player.screenY) * Math.sin((360 - angle) * Math.PI / 180) + player.screenX;
+             const y2 = (gameObject.screenY - player.screenY) * Math.cos((360 - angle) * Math.PI / 180) - (gameObject.screenX - player.screenX) * Math.sin((360 - angle) * Math.PI / 180) + player.screenY;*/
+
+
+            /* todo: project {x,y} and {x2,y2} on outer edge of vision so we get shadow */
+
+            const x = gameObject.screenX + (20 / Math.sqrt(1 + Math.pow(slope, 2)));
+            const y = gameObject.screenY - (20 * slope) / Math.sqrt(1 + Math.pow(slope, 2));
+            const x2 = gameObject.screenX - (20 / Math.sqrt(1 + Math.pow(slope, 2)));
+            const y2 = gameObject.screenY + (20 * slope) / Math.sqrt(1 + Math.pow(slope, 2));
+
+            ctx.beginPath();
+            ctx.moveTo(player.screenX, player.screenY);
+            ctx.lineTo(x, y);
+            ctx.moveTo(player.screenX, player.screenY);
+            ctx.lineTo(x2, y2);
+            ctx.strokeStyle = '#00ffff';
+            ctx.stroke();
+            ctx.closePath();
+            console.log(x + ', ' + y)
+            console.log(gameObject.screenX, gameObject.screenY);
+
+            ctx.strokeStyle = '#000000';
+        });
     };
 
     this.render = (terrain, player, minimap) => {
@@ -172,5 +249,6 @@ function Renderer(canvas, ctx, player) {
         this._drawMinimap(terrain, minimap);
         this._drawPlayerOnMinimap(terrain, player, minimap);
         this._drawPlayerVision(player);
+        this._drawGameObjects(terrain.gameObjects, player);
     }
 }
