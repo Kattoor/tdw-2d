@@ -178,24 +178,19 @@ function Renderer(canvas, ctx, player) {
 
     this._drawGameObjects = (gameObjects, player) => {
 
-        gameObjects.slice(3, 4).map(this._toScreenCoordinates).forEach(gameObject => {
+        gameObjects.map(this._toScreenCoordinates).forEach(gameObject => {
             ctx.beginPath();
             ctx.arc(gameObject.screenX, gameObject.screenY, 20, 0, 2 * Math.PI);
             ctx.fill();
             ctx.closePath();
 
-            player = this._toScreenCoordinates(player.coordinates);
-            ctx.beginPath();
-            ctx.moveTo(player.screenX, player.screenY);
-            ctx.lineTo(gameObject.screenX, gameObject.screenY);
-            ctx.strokeStyle = '#ff0000';
-            ctx.stroke();
-            ctx.closePath();
-
-            const slope = -1 / (-1 * getSlope({x: player.screenX, y: player.screenY}, {
-                x: gameObject.screenX,
-                y: gameObject.screenY
-            })).toFixed(2);
+            const player2 = this._toScreenCoordinates(player.coordinates);
+            /*   ctx.beginPath();
+               ctx.moveTo(player2.screenX, player2.screenY);
+               ctx.lineTo(gameObject.screenX, gameObject.screenY);
+               ctx.strokeStyle = '#ff0000';
+               ctx.stroke();
+               ctx.closePath();*/
 
             /*const c = (1 / Math.sqrt(1 + Math.pow(slope, 2)));
             const s =  (slope / Math.sqrt(1 + Math.pow(slope, 2)));
@@ -220,23 +215,26 @@ function Renderer(canvas, ctx, player) {
              const y2 = (gameObject.screenY - player.screenY) * Math.cos((360 - angle) * Math.PI / 180) - (gameObject.screenX - player.screenX) * Math.sin((360 - angle) * Math.PI / 180) + player.screenY;*/
 
 
+            const slopeBetweenPlayerAndGameObject = -1 * getSlope({x: player2.screenX, y: player2.screenY}, {x: gameObject.screenX, y: gameObject.screenY});
+            const slope = slopeBetweenPlayerAndGameObject === 0 ? Number.POSITIVE_INFINITY : -1 / slopeBetweenPlayerAndGameObject;
+
             /* todo: project {x,y} and {x2,y2} on outer edge of vision so we get shadow */
 
-            const x = gameObject.screenX + (20 / Math.sqrt(1 + Math.pow(slope, 2)));
-            const y = gameObject.screenY - (20 * slope) / Math.sqrt(1 + Math.pow(slope, 2));
-            const x2 = gameObject.screenX - (20 / Math.sqrt(1 + Math.pow(slope, 2)));
-            const y2 = gameObject.screenY + (20 * slope) / Math.sqrt(1 + Math.pow(slope, 2));
+            const r = Math.sqrt(1 + Math.pow(slope, 2));
+
+            const x = r === Number.POSITIVE_INFINITY ? gameObject.screenX : gameObject.screenX + (20 / r);
+            const y = r === Number.POSITIVE_INFINITY ? gameObject.screenY - 20 : gameObject.screenY - (20 * slope) / r;
+            const x2 = r === Number.POSITIVE_INFINITY ? gameObject.screenX : gameObject.screenX - (20 / r);
+            const y2 = r === Number.POSITIVE_INFINITY ? gameObject.screenY + 20 : gameObject.screenY + (20 * slope) / r;
 
             ctx.beginPath();
-            ctx.moveTo(player.screenX, player.screenY);
+            ctx.moveTo(player2.screenX, player2.screenY);
             ctx.lineTo(x, y);
-            ctx.moveTo(player.screenX, player.screenY);
+            ctx.moveTo(player2.screenX, player2.screenY);
             ctx.lineTo(x2, y2);
-            ctx.strokeStyle = '#00ffff';
+            ctx.strokeStyle = '#ff0000';
             ctx.stroke();
             ctx.closePath();
-            console.log(x + ', ' + y)
-            console.log(gameObject.screenX, gameObject.screenY);
 
             ctx.strokeStyle = '#000000';
         });
